@@ -51,11 +51,11 @@ include_directories(
 catkin_package(
 #        INCLUDE_DIRS include
         #  LIBRARIES asv_helm
-        CATKIN_DEPENDS geometry_msgs roscpp project11
+        CATKIN_DEPENDS geometry_msgs roscpp project11 path_planner_common
         #  DEPENDS system_lib
 )
 
-add_library(path_planner_common # confusing; should change or move to the new package
+add_library(path_plan_common # confusing; should change or move to the new package
         src/common/map/Map.cpp
         src/common/dynamic_obstacles/Distribution.cpp
         src/common/dynamic_obstacles/DynamicObstacle.cpp
@@ -64,7 +64,7 @@ add_library(path_planner_common # confusing; should change or move to the new pa
         src/common/map/GridWorldMap.cpp
         )
 
-target_link_libraries(path_planner_common ${GDAL_LIBRARIES})
+target_link_libraries(path_plan_common ${GDAL_LIBRARIES})
 
 add_library(planner
         src/planner/Planner.cpp
@@ -78,9 +78,9 @@ add_library(planner
         src/planner/utilities/RibbonManager.cpp
         )
 
-add_dependencies(planner path_planner_common)
+add_dependencies(planner path_plan_common ${catkin_EXPORTED_TARGETS})
 
-target_link_libraries(planner path_planner_common path_planner_state dubins_plan dubins)
+target_link_libraries(planner path_plan_common ${catkin_LIBRARIES})
 
 add_library(executive
         src/executive/executive.cpp
@@ -103,13 +103,11 @@ add_dependencies(controller_test_node project11_transformations_gencpp)
 target_link_libraries(${PROJECT_NAME}_node
         ${catkin_LIBRARIES}
         executive
-        path_planner_utilities
         )
 
 target_link_libraries(controller_test_node
         ${catkin_LIBRARIES}
         executive
-        path_planner_utilities
         )
 
 catkin_add_gtest(test_planner test/planner/test_planner.cpp)
