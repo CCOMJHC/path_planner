@@ -1,8 +1,8 @@
-#include <utility>
-#include <algorithm>
-#include <memory>
 #include "Edge.h"
-#include <cfloat>
+#include <path_planner_common/State.h>
+
+#include <utility>
+#include <memory>
 
 Edge::Edge(std::shared_ptr<Vertex> start) {
     this->m_Start = std::move(start);
@@ -93,7 +93,6 @@ double Edge::computeTrueCost(PlannerConfig& config) {
     auto ribbonManagerStartedDone = end()->ribbonManager().done();
 
     double dynamicDistance = 0, toCoverDistance = 0;
-    std::vector<std::pair<double, double>> newlyCovered;
     double lastHeading = start()->state().heading();
     int visCount = int(1.0 / config.collisionCheckingIncrement()); // counter to reduce visualization frequency
 
@@ -115,13 +114,14 @@ double Edge::computeTrueCost(PlannerConfig& config) {
     auto timeIncrement = config.collisionCheckingIncrement() / config.maxSpeed();
 
     // nudge along a little so we check at an even amount of intervals from the start state
+    // this helps make sure every plan is scored equally
     auto timeSinceStart = intermediate.time() - config.startStateTime();
     auto timeNudge = fmod(timeSinceStart, timeIncrement);
     intermediate.time() += timeNudge;
 
     if (config.visualizations())
         config.visualizationStream() << "Trajectory:" << std::endl;
-    // collision check along the curve (and watch out for newly covered points, too)
+    // collision and coverage check along the curve
     while (intermediate.time() < endTime) {
         try {
             m_DubinsWrapper.sample(intermediate);
